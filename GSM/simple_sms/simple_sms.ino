@@ -4,6 +4,8 @@ SoftwareSerial gsmSerial(2, 3); // RX, TX
 void initGsm(int baudRate) {
   gsmSerial.begin(baudRate);
   delay(1000);
+  configGsmBaudRate(); // need this to set auto baud rate to the BAUDRATE value
+  delay(1000);
   gsmSerial.println("AT+IPR=" + String(baudRate));  //Set baud rate in GSM Module
   delay(1000);
   gsmSerial.println("AT"); //Check module status
@@ -16,16 +18,40 @@ void initGsm(int baudRate) {
   delay(1000);
 }
 
+int configGsmBaudRate() {
+  String readStr;
+  long iteration = 0, maxIteration = 10;
+
+   while (iteration < maxIteration) {
+    gsmSerial.println("AT");
+    delay(1000);
+    
+    if (gsmSerial.available() > 0) {
+      readStr = gsmSerial.readStringUntil('\n');
+      
+      if (strcmp(readStr.c_str(), "OK\r") == 0) {
+        break;
+      }
+    }
+    
+    iteration++;
+  }
+
+  // add here second branch in case of fault
+}
+
 void deinitGsm() {
   Serial.println("deinit gsm");
   gsmSerial.println("AT+IPR=0");  //Set auto baud rate in GSM Module
   delay(1000);
 }
 
+const int BAUDRATE = 9600;
+
 void setup() {
-  Serial.begin(9600);  //Set baud rate in debug connection with PC
+  Serial.begin(BAUDRATE);  //Set baud rate in debug connection with PC
   Serial.println("Start!");
-  initGsm(9600);
+  initGsm(BAUDRATE);
 }
 
 void sms(String text, String phone) {
@@ -41,16 +67,9 @@ void sms(String text, String phone) {
 }
 
 void loop() { 
-    long k = 0;
-    while (k < 1000000) {
-      if (gsmSerial.available())
-        Serial.write(gsmSerial.read());
-      if (Serial.available())
-        gsmSerial.write(Serial.read());
-      k++;
-    }
-
-  sms(String("BulbaSat revival! 9600 baud rate. More more symbols, azaza"), String("+375291000000"));
+  delay(1000);
+  
+  sms(String("ty slowpoke\n-BulbaSat"), String("+375440000000"));
   deinitGsm();
 
   while (true) {
