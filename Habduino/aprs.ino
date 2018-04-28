@@ -68,7 +68,7 @@ void SetupAPRS(void)
 
 void CheckAPRS(void)
 {
-  if ((millis() >= NextAPRS) && (GPS.Satellites >= 4) && (_txlen == 0))
+  if ((millis() >= NextAPRS) && (GPS.Satellites >= 0) && (_txlen == 0))
   {   
     unsigned long Seconds;
     
@@ -180,14 +180,29 @@ ax25_base91enc(ptr, 2, Channel0Average);
   if (aprs_mode == 0)
   {
     /* Construct the compressed telemetry format */
+    char seenSats[4];
+    dtostrf(GPS.Satellites,2,0,seenSats);
+    
+    char latitudeCoords[8];
+    dtostrf(GPS.Latitude,3,4,latitudeCoords);
+    
+    char longitudeCoords[8];
+    dtostrf(GPS.Longitude,3,4,longitudeCoords);
+
+    char onboardTemp[6];
+    dtostrf(DS18B20_Temperatures[0],3,1,onboardTemp);
+
+//    char batteryVoltage[4];
+//    dtostrf(Channel0Average,1,2,batteryVoltage);
+    
     ax25_frame(
       APRS_CALLSIGN, APRS_SSID,
       APRS_DEVID, 0,
       Wide1Path, Wide2Path,
-      "!/%s%sO   /A=%06ld|%s|%s",
+      "!/%s%sO   /A=%06ld|%s|%s|%s,%s|%s",
       ax25_base91enc(slat, 4, aprs_lat),
       ax25_base91enc(slng, 4, aprs_lon),
-      aprs_alt, stlm, APRS_COMMENT);  // comment,APRS_CALLSIGN, ++APRSSentenceCounter);
+      aprs_alt, stlm, seenSats, latitudeCoords, longitudeCoords, onboardTemp);  // comment,APRS_CALLSIGN, ++APRSSentenceCounter);
   
     #ifdef APRS_TELEM_INTERVAL
       // Send the telemetry definitions every 10 packets
